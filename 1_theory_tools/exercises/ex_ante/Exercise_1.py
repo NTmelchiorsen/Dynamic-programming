@@ -15,10 +15,10 @@ def solve_backwards(beta,W,T):
         #loop over states
         for w in range(W+1):
             c = np.arange(w+1)
-            
-            #Fill in
-            
-            Vstar_bi[w,t] = np.amax(V_guess)
-            Cstar_bi[w,t] = np.argmax(V_guess)
+            w_c = w - c
+            V_next = Vstar_bi[w_c,t+1]
+            V_guess = np.sqrt(c)+beta*V_next #(w+1) vector of possible values next period
+            Vstar_bi[w,t] = np.amax(V_guess) #Find the maximum value
+            Cstar_bi[w,t] = np.argmax(V_guess) #Find the corresponding consumption (in this case equal to the index of the maximum value)
 
     return Cstar_bi, Vstar_bi
