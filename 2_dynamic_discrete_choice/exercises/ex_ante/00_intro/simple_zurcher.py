@@ -132,7 +132,8 @@ def bellman(V_next, par, taste_shocks = 'None', stochastic_transition = False):
         
         # Exercise 1
         if taste_shocks == 'None':
-            pass # Fill in
+          V_now[x] = maxV
+          pk[x] = (value_keep > value_replace)
         
         # Exercise 3
         elif taste_shocks == 'Extreme Value':

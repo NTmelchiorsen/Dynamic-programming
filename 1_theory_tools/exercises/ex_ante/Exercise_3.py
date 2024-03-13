@@ -31,3 +31,7 @@ def solve_consumption_grid_search(par):
         delta = np.amax(np.abs(sol.V - V_next))
     
     return sol
+
+    \input
+
+    
