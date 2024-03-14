@@ -22,11 +22,11 @@ def setup():
     par.p = np.array([0.0937, 0.4475, 0.4459, 0.0127])   # Transition probability
     par.RC = 11.7257                                     # Replacement cost
     par.c = 2.45569 * 0.001                              # Cost parameter
-    par.beta = 0.9999                                    # Discount factor
+    par.beta = 0.99                                    # Discount factor
     
     # Parameters for VFI
-    par.max_iter = 200   # maximum number of iterations
-    par.tol = 10e-2 #convergence tol. level 
+    par.max_iter = 10000   # maximum number of iterations
+    par.tol = 1.0e-8 #convergence tol. level 
     
     # Create grid
     par.grid = np.arange(0,par.n) # milage grid
@@ -38,9 +38,13 @@ def setup():
     # Simulated extreme value taste shocks
     np.random.seed(1987)
     par.num_eps = 10000
-    par.eps_keep_gumb = np.random.gumbel(-par.beta * np.euler_gamma, 1,par.num_eps)
-    par.eps_replace_gumb = np.random.gumbel(-par.beta * np.euler_gamma, 1,par.num_eps)
+    par.sigma_eps = 1.0
+    par.eps_keep_gumb = np.random.gumbel(loc=-par.sigma_eps * np.euler_gamma,scale=par.sigma_eps,size=par.num_eps)
+    par.eps_replace_gumb = np.random.gumbel(loc=-par.sigma_eps * np.euler_gamma, scale=par.sigma_eps,size=par.num_eps)
     
+    # Gaussian taste shocks
+    par.eps_keep_norm = np.random.normal(0,1,par.num_eps)
+    par.eps_replace_norm = np.random.normal(0,1,par.num_eps)
     
     # For vectorized
     par.P1 = create_transition_matrix(0, par)
@@ -49,10 +53,9 @@ def setup():
         
     return par
 
-def solve_VFI(par, vectorized = False, **kwargs):
+def solve_SA(par, vectorized = False, **kwargs):
     """
-    The function `solve_VFI` solves a value function iteration problem
-    
+    The function `solve_SA` solves a performs successive approximations(aka. value function iteration)    
     Args:
       par: The parameter `par` is an object that contains various parameters
       vectorized: The "vectorized" parameter is a boolean flag that determines whether to use a
@@ -85,6 +88,8 @@ def solve_VFI(par, vectorized = False, **kwargs):
         sol.it += 1
         sol.V = V_now
         sol.pk = pk
+    print(f'Finished after {sol.it} iterations')
+    print(f'Convergence achieved: {sol.delta < par.tol}')
     
     return sol
 
@@ -92,7 +97,8 @@ def solve_VFI(par, vectorized = False, **kwargs):
 
 def bellman(V_next, par, taste_shocks = 'None', stochastic_transition = False):
     """
-    The function `bellman` calculates the value and choice for each state in a dynamic programming
+    The function `bellman` evaluates the integreated value bellmann-operator in a dynamic programming problem.
+    ie. For a given guess of the value function for the next period, it calculates a new guess of the value and also the choice probabilities.
     problem using the Bellman equation, considering different types of taste shocks and transition
     probabilities.
     
@@ -110,40 +116,41 @@ def bellman(V_next, par, taste_shocks = 'None', stochastic_transition = False):
       The function `bellman` returns two arrays: `V_now` and `pk`.
     """
     
-    V_now = np.zeros([par.n]) #arbitrary starting values
-    pk = np.zeros([par.n]) #arbitrary starting values
+    V_now = np.zeros([par.n]) # Initialize value function array
+    pk = np.zeros([par.n]) # Initialize choice probability array
     
-    for  x in par.grid:
+    for  x in par.grid: # Loop over states
             
-        # Calculate expected value of each choice
+        # Calculate expected future value across states for each choice
         if stochastic_transition == False:
-            pass # Fill in
+            EV_keep = EV_deterministic(0, x, V_next, par)
+            EV_replace = EV_deterministic(1, x, V_next, par)
         else: #Exercise 2
-            pass # Fill in
+            EV_keep = EV_stochastic(0, x, V_next, par)
+            EV_replace = EV_stochastic(1, x, V_next, par)
         
         # Calculate value of each choice
-        value_keep = None # Fill in
-        value_replace = None # Fill in
+        value_keep = util(0, x, par) + par.beta * EV_keep
+        value_replace = util(1, x, par) + par.beta * EV_replace
         
-        # Find the maximum value
-        pass # Fill in
+        # Find the maximum value across choices
+        maxV = np.amax([value_keep, value_replace])
         
         ### Update value and choice
         
         # Exercise 1
         if taste_shocks == 'None':
-          V_now[x] = maxV
-          pk[x] = (value_keep > value_replace)
+            V_now[x] = maxV
+            pk[x] = (value_keep > value_replace)
         
         # Exercise 3
         elif taste_shocks == 'Extreme Value':
-            pass # Fill in
+            V_next = 
         
         # Exercise 4
         elif taste_shocks == 'Monte Carlo Extreme Value':
             values = np.column_stack([value_keep + par.eps_keep_gumb, value_replace + par.eps_replace_gumb])
             choices = np.argmax(values, axis = 1)
-
             V_now[x] = values[np.arange(par.num_eps), choices].mean()
             pk[x] = 1 - choices.mean()
         
@@ -201,9 +208,13 @@ def EV_deterministic(d, x, V_next, par):
     Returns:
       the value of next period
     """
-    x_next = None # fill in
+    if d == 0:
+      x_next = x + 1
+    else:
+      x_next = 1
+
     x_next = np.fmin(x_next, par.n-1) # Ensure that x_next is within grid
-    return None # Fill in
+    return V_next[x_next]
 
 def EV_stochastic(d, x, V_next, par):
     """
@@ -223,9 +234,13 @@ def EV_stochastic(d, x, V_next, par):
     the decision variable (d), and the transition probabilities (par.transition) and probabilities
     (par.p).
     """
-    pass # Fill in
+    EV = 0
+    for p, m in zip(par.p, par.transition):
+        x_next = x*(1-d) + m
+        x_next = np.fmin(x_next, par.n-1) # Ensure that x_next is within grid
+        EV += p * V_next[x_next]
     
-    return None # Fill in
+    return EV
 
 def bellman_vector(V_next, par):
     """
