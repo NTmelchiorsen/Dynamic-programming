@@ -146,7 +146,8 @@ def bellman(V_next, par, taste_shocks = 'None', stochastic_transition = False):
         
         # Exercise 3
         elif taste_shocks == 'Extreme Value':
-            V_now[x] = (maxV + np.log(np.exp((value_keep-maxV))  +  np.exp((value_replace-maxV))))
+            logsum = (maxV + np.log(np.exp((value_keep-maxV))  +  np.exp((value_replace-maxV))))
+            V_now[x] = logsum
             pk[x] = 1/(1+np.exp((value_replace-value_keep))) 
         
         # Exercise 4
@@ -269,7 +270,8 @@ def bellman_vector(V_next, par):
     maxV = np.amax([value_keep, value_replace])
     
     # Update value and choice
-    V_now = (maxV + np.log(np.exp(value_keep-maxV)  +  np.exp(value_replace-maxV)))
+    logsum = (maxV + np.log(np.exp(value_keep-maxV)  +  np.exp(value_replace-maxV)))
+    V_now = logsum
     pk = 1/(1+np.exp(value_replace-value_keep)) 
             
     return V_now, pk

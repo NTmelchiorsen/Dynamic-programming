@@ -49,6 +49,14 @@ def EGM_loop (sol,t,par):
     interp = interpolate.interp1d(sol.M[:,t+1],sol.C[:,t+1], bounds_error=False, fill_value = "extrapolate")  # Interpolation function
     for i_a,a in enumerate(par.grid_a): # Loop over end-of-period assets
         
+
+        m_next = par.R * par.grid_a + par.eps_w
+        c_next  = interp(m_next)
+        emu_next = sum(par.eps_w * marg_util(c_next,par))
+        c_now = inv_marg_util(par.beta * par.R * emu_next,par)
+
+
+
         # Fill in
         # Hint: Use the EGM step (see Bertel's slides)
         # 1. Find m_next
@@ -66,7 +74,13 @@ def EGM_loop (sol,t,par):
 def EGM_vectorized (sol,t,par):
 
     interp = interpolate.interp1d(sol.M[:,t+1],sol.C[:,t+1], bounds_error=False, fill_value = "extrapolate") # Interpolation function
-
+    m_next = par.R * par.grid_a[:,np.newaxis] + par.eps_w[np.newaxis,:]
+    c_next  = interp(m_next)
+    emu_next = sum(par.eps_w[np.newaxis,:] * marg_util(c_next,par), axis = 1)
+    c_now = inv_marg_util(par.beta * par.R * emu_next,par)
+    sol.C[i_a+1,t]= c_now
+    sol.M[i_a+1,t]= c_now + par.grid_a
+        
     # Fill in
     # Hint: Look at the exercise_2.EGM_loop function and follow the EGM step procedure
     #       Look at the exercise_1.euler_error_func function and follow the vectorization syntax

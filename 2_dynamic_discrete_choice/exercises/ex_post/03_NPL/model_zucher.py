@@ -87,7 +87,7 @@ class zurcher():
         # Compute Vsigma
         value_keep = -self.cost + eulerc-np.log(pk)
         value_replace = -self.RC - self.cost[0] + eulerc - np.log(1-pk) 
-        pv = value_keep*pk + value_replace*(1-pk)
+        pv = value_keep * pk + value_replace * (1-pk)
 
         self.Vsigma = np.ravel(self.Finv@pv)
 

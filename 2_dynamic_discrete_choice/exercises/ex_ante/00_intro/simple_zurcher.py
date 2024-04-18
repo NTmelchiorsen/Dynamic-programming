@@ -123,34 +123,32 @@ def bellman(V_next, par, taste_shocks = 'None', stochastic_transition = False):
             
         # Calculate expected future value across states for each choice
         if stochastic_transition == False:
-            EV_keep = EV_deterministic(0, x, V_next, par)
-            EV_replace = EV_deterministic(1, x, V_next, par)
+            pass # Fill in using EV_deterministic
         else: #Exercise 2
-            EV_keep = EV_stochastic(0, x, V_next, par)
-            EV_replace = EV_stochastic(1, x, V_next, par)
+            pass # Fill in using EV_stochastic
         
         # Calculate value of each choice
-        value_keep = util(0, x, par) + par.beta * EV_keep
-        value_replace = util(1, x, par) + par.beta * EV_replace
+        value_keep = None # Fill in
+        value_replace = None # Fill in
         
         # Find the maximum value across choices
-        maxV = np.amax([value_keep, value_replace])
+        pass # Fill in
         
         ### Update value and choice
         
         # Exercise 1
         if taste_shocks == 'None':
-            V_now[x] = maxV
-            pk[x] = (value_keep > value_replace)
+            pass # Fill in
         
         # Exercise 3
         elif taste_shocks == 'Extreme Value':
-            V_next = 
+            pass # Fill in
         
         # Exercise 4
         elif taste_shocks == 'Monte Carlo Extreme Value':
             values = np.column_stack([value_keep + par.eps_keep_gumb, value_replace + par.eps_replace_gumb])
             choices = np.argmax(values, axis = 1)
+
             V_now[x] = values[np.arange(par.num_eps), choices].mean()
             pk[x] = 1 - choices.mean()
         
@@ -208,13 +206,9 @@ def EV_deterministic(d, x, V_next, par):
     Returns:
       the value of next period
     """
-    if d == 0:
-      x_next = x + 1
-    else:
-      x_next = 1
-
+    x_next = None # fill in
     x_next = np.fmin(x_next, par.n-1) # Ensure that x_next is within grid
-    return V_next[x_next]
+    return None # Fill in
 
 def EV_stochastic(d, x, V_next, par):
     """
@@ -234,13 +228,9 @@ def EV_stochastic(d, x, V_next, par):
     the decision variable (d), and the transition probabilities (par.transition) and probabilities
     (par.p).
     """
-    EV = 0
-    for p, m in zip(par.p, par.transition):
-        x_next = x*(1-d) + m
-        x_next = np.fmin(x_next, par.n-1) # Ensure that x_next is within grid
-        EV += p * V_next[x_next]
+    pass # Fill in
     
-    return EV
+    return None # Fill in
 
 def bellman_vector(V_next, par):
     """
